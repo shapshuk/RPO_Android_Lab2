@@ -1,7 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-//    id 'com.google.gms.google-services'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -55,3 +55,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics-ktx'
     implementation 'com.google.firebase:firebase-auth-ktx'
 }
+
+apply plugin: 'com.google.gms.google-services'
