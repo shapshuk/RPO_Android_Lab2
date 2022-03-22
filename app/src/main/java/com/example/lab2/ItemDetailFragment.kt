@@ -8,24 +8,40 @@ import com.google.android.material.appbar.CollapsingToolbarLayout
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.net.toUri
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import com.bumptech.glide.Glide
 import com.example.lab2.placeholder.PlaceholderContent
 import com.example.lab2.databinding.FragmentItemDetailBinding
+import com.example.lab2.models.Content
+import com.example.lab2.services.DataService
+import com.example.lab2.services.FirebaseDataService
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.ui.StyledPlayerView
+import com.google.firebase.ktx.Firebase
 
-/**
- * A fragment representing a single Item detail screen.
- * This fragment is either contained in a [ItemListFragment]
- * in two-pane mode (on larger screen devices) or self-contained
- * on handsets.
- */
 class ItemDetailFragment : Fragment() {
 
     /**
      * The placeholder content this fragment is presenting.
      */
-    private var item: PlaceholderContent.PlaceholderItem? = null
+    private var item: Content? = null
 
-    lateinit var itemDetailTextView: TextView
+    private lateinit var localId : String
+
+    private var dataService : DataService = FirebaseDataService()
+
+    lateinit var itemIdTextView: TextView
+    lateinit var itemNameTextView: TextView
+    lateinit var itemVideoPlayer: StyledPlayerView
+    lateinit var itemImageUrlImageView: ImageView
+
+    lateinit var player : ExoPlayer
+
     private var toolbarLayout: CollapsingToolbarLayout? = null
 
     private var _binding: FragmentItemDetailBinding? = null
@@ -34,25 +50,16 @@ class ItemDetailFragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private val dragListener = View.OnDragListener { v, event ->
-        if (event.action == DragEvent.ACTION_DROP) {
-            val clipDataItem: ClipData.Item = event.clipData.getItemAt(0)
-            val dragData = clipDataItem.text
-            item = PlaceholderContent.ITEM_MAP[dragData]
-            updateContent()
-        }
-        true
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        arguments?.let {
-            if (it.containsKey(ARG_ITEM_ID)) {
+        arguments?.let { bundle ->
+            if (bundle.containsKey(ARG_ITEM_ID)) {
                 // Load the placeholder content specified by the fragment
                 // arguments. In a real-world scenario, use a Loader
                 // to load content from a content provider.
-                item = PlaceholderContent.ITEM_MAP[it.getString(ARG_ITEM_ID)]
+                localId =  bundle.getString(ARG_ITEM_ID)!!
             }
         }
     }
@@ -63,23 +70,40 @@ class ItemDetailFragment : Fragment() {
     ): View? {
 
         _binding = FragmentItemDetailBinding.inflate(inflater, container, false)
+
+        player = ExoPlayer.Builder(requireActivity()).build()
+
         val rootView = binding.root
 
         toolbarLayout = binding.toolbarLayout
-        itemDetailTextView = binding.itemDetail
 
-        updateContent()
-        rootView.setOnDragListener(dragListener)
+        itemIdTextView = binding.itemId!!
+        itemImageUrlImageView = binding.toolbarImage!!
+        itemNameTextView = binding.itemName!!
+
+        itemVideoPlayer = binding.itemVideoPlayer!!
+        itemVideoPlayer.player = player
+
+        dataService.getEntityById(localId).observe(viewLifecycleOwner) {
+            item = it
+            updateContent()
+        }
 
         return rootView
     }
 
     private fun updateContent() {
-        toolbarLayout?.title = item?.content
+        toolbarLayout?.title = item?.name
 
-        // Show the placeholder content as text in a TextView.
+//         Show the placeholder content as text in a TextView.
         item?.let {
-            itemDetailTextView.text = it.details
+            itemNameTextView.text = it.name
+            itemIdTextView.text = it.id
+
+            Glide.with(this).load(it.imageUrl.toUri()).into(itemImageUrlImageView)
+            
+            player.setMediaItem(MediaItem.fromUri(it.videoUrl.toUri()))
+            player.prepare()
         }
     }
 

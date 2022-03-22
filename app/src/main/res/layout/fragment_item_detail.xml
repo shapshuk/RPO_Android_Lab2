@@ -22,6 +22,15 @@
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:toolbarId="@+id/toolbar">
 
+            <ImageView
+                android:id="@+id/toolbarImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:fitsSystemWindows="true"
+                app:layout_collapseMode="parallax" />
+
+
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/detail_toolbar"
                 android:layout_width="match_parent"
@@ -37,10 +46,14 @@
         android:id="@+id/item_detail_scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_margin="20dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
         <TextView
-            android:id="@+id/item_detail"
+            android:id="@+id/item_id"
             style="?android:attr/textAppearanceLarge"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -50,18 +63,29 @@
             android:paddingBottom="16dp"
             android:textIsSelectable="true"
             tools:context="com.example.lab2.ItemDetailFragment" />
+        <TextView
+            android:id="@+id/item_name"
+            style="?android:attr/textAppearanceLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="@dimen/container_horizontal_margin"
+            android:paddingTop="16dp"
+            android:paddingEnd="@dimen/container_horizontal_margin"
+            android:paddingBottom="16dp"
+            android:textIsSelectable="true"
+            tools:context="com.example.lab2.ItemDetailFragment" />
+        <com.google.android.exoplayer2.ui.StyledPlayerView
+            android:id="@+id/item_videoPlayer"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:paddingStart="@dimen/container_horizontal_margin"
+            android:paddingTop="16dp"
+            android:paddingEnd="@dimen/container_horizontal_margin"
+            android:paddingBottom="16dp"
+            tools:context="com.example.lab2.ItemDetailFragment" />
+        </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|start"
-        android:layout_marginEnd="@dimen/fab_margin"
-        android:layout_marginBottom="16dp"
-        app:layout_anchor="@+id/item_detail_scroll_view"
-        app:layout_anchorGravity="top|end"
-        app:srcCompat="@android:drawable/stat_notify_chat" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
