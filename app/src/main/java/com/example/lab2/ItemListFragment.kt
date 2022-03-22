@@ -14,9 +14,14 @@ import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.example.lab2.adapters.ContentAdapter
 import com.example.lab2.placeholder.PlaceholderContent;
 import com.example.lab2.databinding.FragmentItemListBinding
 import com.example.lab2.databinding.ItemListContentBinding
+import com.example.lab2.models.Content
+import com.example.lab2.services.DataService
+import com.example.lab2.services.FirebaseDataService
+import com.google.firebase.ktx.Firebase
 
 /**
  * A Fragment representing a list of Pings. This fragment
@@ -28,6 +33,11 @@ import com.example.lab2.databinding.ItemListContentBinding
  */
 
 class ItemListFragment : Fragment() {
+
+    private val dataService : DataService = FirebaseDataService()
+
+    private lateinit var adapter: ContentAdapter
+
 
     /**
      * Method to intercept global key events in the
@@ -90,101 +100,29 @@ class ItemListFragment : Fragment() {
         itemDetailFragmentContainer: View?
     ) {
 
-        recyclerView.adapter = SimpleItemRecyclerViewAdapter(
-            PlaceholderContent.ITEMS, itemDetailFragmentContainer
-        )
-    }
-
-    class SimpleItemRecyclerViewAdapter(
-        private val values: List<PlaceholderContent.PlaceholderItem>,
-        private val itemDetailFragmentContainer: View?
-    ) :
-        RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-
-            val binding =
-                ItemListContentBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            return ViewHolder(binding)
-
+        dataService.entities.observe(viewLifecycleOwner) { newValue ->
+            adapter.notifyDataSetChanged()
         }
 
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = values[position]
-            holder.idView.text = item.id
-            holder.contentView.text = item.content
-
-            with(holder.itemView) {
-                tag = item
-                setOnClickListener { itemView ->
-                    val item = itemView.tag as PlaceholderContent.PlaceholderItem
-                    val bundle = Bundle()
-                    bundle.putString(
-                        ItemDetailFragment.ARG_ITEM_ID,
-                        item.id
-                    )
-                    if (itemDetailFragmentContainer != null) {
-                        itemDetailFragmentContainer.findNavController()
-                            .navigate(R.id.fragment_item_detail, bundle)
-                    } else {
-                        itemView.findNavController().navigate(R.id.show_item_detail, bundle)
-                    }
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    /**
-                     * Context click listener to handle Right click events
-                     * from mice and trackpad input to provide a more native
-                     * experience on larger screen devices
-                     */
-                    setOnContextClickListener { v ->
-                        val item = v.tag as PlaceholderContent.PlaceholderItem
-                        Toast.makeText(
-                            v.context,
-                            "Context click of item " + item.id,
-                            Toast.LENGTH_LONG
-                        ).show()
-                        true
-                    }
-                }
-
-                setOnLongClickListener { v ->
-                    // Setting the item id as the clip data so that the drop target is able to
-                    // identify the id of the content
-                    val clipItem = ClipData.Item(item.id)
-                    val dragData = ClipData(
-                        v.tag as? CharSequence,
-                        arrayOf(ClipDescription.MIMETYPE_TEXT_PLAIN),
-                        clipItem
-                    )
-
-                    if (Build.VERSION.SDK_INT >= 24) {
-                        v.startDragAndDrop(
-                            dragData,
-                            View.DragShadowBuilder(v),
-                            null,
-                            0
-                        )
-                    } else {
-                        v.startDrag(
-                            dragData,
-                            View.DragShadowBuilder(v),
-                            null,
-                            0
-                        )
-                    }
-                }
+        adapter = ContentAdapter(
+            dataService.entities,  itemDetailFragmentContainer
+        ) { content, contentView ->
+            val bundle = Bundle()
+            bundle.putString(
+                ItemDetailFragment.ARG_ITEM_ID,
+                content.id.toString()
+            )
+            if (itemDetailFragmentContainer != null) {
+                itemDetailFragmentContainer.findNavController().navigate(R.id.fragment_item_detail, bundle)
+            } else {
+                contentView.findNavController().navigate(R.id.show_item_detail, bundle)
             }
+
         }
 
-        override fun getItemCount() = values.size
-
-        inner class ViewHolder(binding: ItemListContentBinding) :
-            RecyclerView.ViewHolder(binding.root) {
-            val idView: TextView = binding.idText
-            val contentView: TextView = binding.content
-        }
-
+        recyclerView.adapter = this.adapter
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
