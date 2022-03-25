@@ -2,15 +2,18 @@ package com.example.lab2.services
 
 import android.util.Log
 import android.widget.Toast
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
 interface AuthService {
-    val isLoggedIn: Boolean
-    val user: User?
-    fun signUp(email: String, password: String, completion: (success: Boolean) -> Unit )
-    fun signIn(email: String, password: String, completion: (success: Boolean) -> Unit )
+    val isLoggedIn: LiveData<Boolean>
+    val user: LiveData<User?>
+    fun signUp(email: String, password: String)
+    fun signIn(email: String, password: String)
+    fun signOut()
 }
 
 interface User {
@@ -23,24 +26,36 @@ data class DefaultUser (override val id: String, override val name: String, over
 
 class FirebaseAuthService (private val auth: FirebaseAuth = Firebase.auth) : AuthService {
 
-    override val isLoggedIn: Boolean
-        get() = auth.currentUser != null
+    private val _isLoggedIn : MutableLiveData<Boolean> = MutableLiveData(false)
+    private val _user: MutableLiveData<User?> = MutableLiveData(null)
 
-    override val user: User?
-        get() {
-            val fUser = auth.currentUser
-            if (fUser != null) {
-                return DefaultUser(fUser.uid, fUser.displayName ?: "user",  fUser.email ?: "email")
-            }
-            return null
+    init {
+        auth.addAuthStateListener {
+            _isLoggedIn.postValue(it.currentUser != null)
+            _user.postValue(
+                if (it.currentUser != null)
+                    DefaultUser(it.currentUser!!.uid, it.currentUser!!.displayName ?: "user",  it.currentUser!!.email ?: "email")
+                else
+                    null
+            )
         }
-
-    override fun signUp(email: String, password: String, completion: (success: Boolean) -> Unit) {
-        auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task -> completion(task.isSuccessful) }
     }
 
-    override fun signIn(email: String, password: String, completion: (success: Boolean) -> Unit) {
-        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task -> completion(task.isSuccessful) }
+    override val isLoggedIn: LiveData<Boolean>
+        get() = _isLoggedIn
+
+    override val user: LiveData<User?>
+        get() = _user
+
+    override fun signUp(email: String, password: String) {
+        auth.createUserWithEmailAndPassword(email, password)
     }
 
+    override fun signIn(email: String, password: String) {
+        auth.signInWithEmailAndPassword(email, password)
+    }
+
+    override fun signOut() {
+        auth.signOut()
+    }
 }

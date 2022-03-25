@@ -13,4 +13,6 @@
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
 
     <string name="title_activity_auth">Auth</string>
+    <string name="sign_out">Sign out</string>
+    <string name="grid_layout">Grid layout</string>
 </resources>
